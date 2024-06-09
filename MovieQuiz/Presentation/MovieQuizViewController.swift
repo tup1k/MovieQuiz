@@ -2,14 +2,12 @@ import UIKit
 
 final class MovieQuizViewController: UIViewController {
 
-    @IBOutlet private weak var questionTitleLabel: UILabel!
-    @IBOutlet private weak var indexLabel: UILabel!
-    @IBOutlet private weak var imageView: UIImageView!
-    @IBOutlet private weak var questionLabel: UILabel!
-    @IBOutlet private weak var yesButton: UIButton!
-    @IBOutlet private weak var noButton: UIButton!
-    
-    
+    @IBOutlet private weak var questionTitleLabel: UILabel! // Статичный тайтл ВОПРОС
+    @IBOutlet private weak var indexLabel: UILabel! // Тайтл с номером вопроса из числа всех вопросов (1/10)
+    @IBOutlet private weak var imageView: UIImageView! // Тайтл с картинкой
+    @IBOutlet private weak var questionLabel: UILabel! // Тайтл с текстом вопроса квиза (в нашем случае грузится из моковских данных)
+    @IBOutlet private weak var yesButton: UIButton! // Дизайн кнопки ДА
+    @IBOutlet private weak var noButton: UIButton! // Дизайн кнопки НЕТ
     
     //Общая структура
     private struct ViewModel {
@@ -82,12 +80,8 @@ final class MovieQuizViewController: UIViewController {
                 text: "Рейтинг этого фильма больше чем 6?",
                 correctAnswer: false)
         ]
-    
-    // Переменная индекс вопроса
-    private var currentQuestionIndex = 0
-    
-    // Переменная число правильных ответов для вывода в конце
-    private var correctAnswers = 0
+    private var currentQuestionIndex = 0 // Переменная индекс вопроса
+    private var correctAnswers = 0 // Переменная число правильных ответов для вывода в конце
 
     // Метод перевода данных из представления базы данных в представление приложения
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
@@ -105,7 +99,7 @@ final class MovieQuizViewController: UIViewController {
         questionLabel.text = step.question
     }
     
-    // Метод выводит на экран результаты квиза
+    // Метод выводит на экран результаты квиза ну и обнуляет все результаты при нажатии на кнопку
     private func showRes(quiz result: QuizResultViewModel) {
         let alert = UIAlertController(
             title: result.title,
@@ -124,7 +118,7 @@ final class MovieQuizViewController: UIViewController {
         self.present(alert, animated: true, completion: nil)
     }
     
-    // Метод красит рамку в цвет в зависимости от правильности ответа
+    // Метод выполняет действия в случае если ответ верный/не верный
     private func showAnswerResult(isCorrect: Bool) {
         if isCorrect {
             correctAnswers += 1
@@ -134,7 +128,7 @@ final class MovieQuizViewController: UIViewController {
         imageView.layer.cornerRadius = 20
         imageView.layer.borderColor =  isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
         
-        // Отложенный запуск метода через 1 с
+        // Отложенный запуск метода показа следуюшего вопроса/окончания квиза через 1 с
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
            self.showNextQuestionOrResults()
         }
@@ -143,32 +137,34 @@ final class MovieQuizViewController: UIViewController {
     // Метод либо показывает следующий вопрос, либо показывает экран результатов квиза
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questions.count - 1 {
-            let text = "Ваш результат: \(correctAnswers)/10" // 1
-            let viewModel = QuizResultViewModel( // 2
+            let text = "Ваш результат: \(correctAnswers)/\(questions.count)" // Выводит статистику по квизу
+            let viewModel = QuizResultViewModel( // Создает объект структуры финала квиза
                         title: "Этот раунд окончен!",
                         text: text,
                         buttonText: "Сыграть ещё раз")
-            showRes(quiz: viewModel)
-            imageView.layer.borderColor = UIColor.clear.cgColor
+            showRes(quiz: viewModel) // Запускаем метод вывода на экран заключительного экрана
+            imageView.layer.borderColor = UIColor.clear.cgColor // Почему то в учебе не указано что цвет рамки надо отключать или я слепой
         } else { // 2
             currentQuestionIndex += 1 // Перебираем следующий индекс-вопрос
             let nextQuestion = questions[currentQuestionIndex]
             let viewModel = convert(model: nextQuestion)
-            show(quiz: viewModel)
-            imageView.layer.borderColor = UIColor.clear.cgColor
+            show(quiz: viewModel) // Показываем данные следующего вопроса
+            imageView.layer.borderColor = UIColor.clear.cgColor // Почему то в учебе не указано что цвет рамки надо отключать или я слепой
         }
     }
     
+    // Экшн кнопки ДА
     @IBAction private func yesButtonClicked(_ sender: Any) {
         let currentQuestion = questions[currentQuestionIndex]
         let myAnswer = true
-        showAnswerResult(isCorrect: myAnswer == currentQuestion.correctAnswer)
+        showAnswerResult(isCorrect: myAnswer == currentQuestion.correctAnswer) //запускаем метод сравнения нашего ответа с правильным в обоих случаях
     }
     
+    // Экшн кнопки НЕТ
     @IBAction private func noButtonClicked(_ sender: Any) {
         let currentQuestion = questions[currentQuestionIndex]
         let myAnswer = false
-        showAnswerResult(isCorrect: myAnswer == currentQuestion.correctAnswer)
+        showAnswerResult(isCorrect: myAnswer == currentQuestion.correctAnswer) //запускаем метод сравнения нашего ответа с правильным в обоих случаях
     }
     
     
@@ -176,31 +172,18 @@ final class MovieQuizViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        yesButton.titleLabel?.font = UIFont(name: "YS Display-Medium", size: 20)
-        noButton.titleLabel?.font = UIFont(name: "YS Display-Medium", size: 20)
-        questionLabel.font = UIFont(name: "YS Display-Bold", size: 23)
-        indexLabel.font = UIFont(name: "YS Display-Medium", size: 20)
-        questionTitleLabel.font = UIFont(name: "YS Display-Medium", size: 20)
-        imageView.layer.cornerRadius = 20
-        
+        // Загруженные шрифты удается подключить либо так, либо через левые схемы параметров
+        indexLabel.font = UIFont(name: "YSDisplay-Medium", size: 20)
+        questionLabel.font = UIFont(name: "YSDisplay-Bold", size: 23)
+        yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
+        noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
+
+        // После launchScreen запускаем первый вопрос
         let currentQuestion = questions[currentQuestionIndex]
         let convertedCurrentQuestion = convert(model: currentQuestion)
         show(quiz: convertedCurrentQuestion)
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /*
