@@ -106,7 +106,8 @@ final class MovieQuizViewController: UIViewController {
             message: result.text,
             preferredStyle: .alert)
         
-        let action = UIAlertAction(title: result.buttonText, style: .default) { _ in
+        let action = UIAlertAction(title: result.buttonText, style: .default) {[weak self] _ in
+            guard let self = self else { return }
                 self.currentQuestionIndex = 0
                 self.correctAnswers = 0
                 
@@ -129,8 +130,9 @@ final class MovieQuizViewController: UIViewController {
         imageView.layer.borderColor =  isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
         
         // Отложенный запуск метода показа следуюшего вопроса/окончания квиза через 1 с
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-           self.showNextQuestionOrResults()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            self.showNextQuestionOrResults()
         }
     }
     
