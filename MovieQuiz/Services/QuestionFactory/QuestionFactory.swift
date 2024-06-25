@@ -7,10 +7,9 @@
 
 import Foundation
 
-//class QuestionFactory: QuestionFactoryProtocol {
-class QuestionFactory {
+class QuestionFactory: QuestionFactoryProtocol {
     /// Массив данных для квиза
-    internal let questions: [QuizQuestion] = [
+    private let questions: [QuizQuestion] = [
             QuizQuestion(
                 image: "The Godfather",
                 text: "Рейтинг этого фильма больше чем 6?",
@@ -53,21 +52,18 @@ class QuestionFactory {
                 correctAnswer: false)
         ]
     
-    func requestNextQuestion() -> QuizQuestion? {
-        guard let index = (0..<questions.count).randomElement() else {
-            return nil
-        }
-        print(index)
-        return questions[safe: index]
+    weak var delegate: QuestionFactoryDelegate?
+    
+    init(delegate: QuestionFactoryDelegate? = nil) {
+        self.delegate = delegate
     }
     
-//    subscript(index: Int) -> Int {
-//        get {
-//            
-//        }
-//        
-//        set(newValue) {
-//            
-//        }
-//    }
+    func requestNextQuestion() {
+        guard let index = (0..<questions.count).randomElement() else {
+            delegate?.didReceiveNextQuestion(question: nil)
+            return
+        }
+        let question = questions[safe: index]
+        delegate?.didReceiveNextQuestion(question: question)
+    }
 }

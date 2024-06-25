@@ -7,8 +7,8 @@
 
 import Foundation
 
-// Структура вопроса в базе мок-овских данных
-internal struct QuizQuestion {
+// Структура вопросов в базе мок-овских данных
+struct QuizQuestion {
     let image: String // Картинки в эссетах, ссылки в виде названий
     let text: String
     let correctAnswer: Bool

@@ -1,7 +1,7 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController {
-
+final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, AlertPresenterDelegate {
+    
     @IBOutlet private weak var questionTitleLabel: UILabel! // Статичный тайтл ВОПРОС
     @IBOutlet private weak var indexLabel: UILabel! // Тайтл с номером вопроса из числа всех вопросов (1/10)
     @IBOutlet private weak var imageView: UIImageView! // Тайтл с картинкой
@@ -9,26 +9,27 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet private weak var yesButton: UIButton! // Дизайн кнопки ДА
     @IBOutlet private weak var noButton: UIButton! // Дизайн кнопки НЕТ
     
-    //Общая структура
-    private struct ViewModel {
-        let image: UIImage
-        let question: String
-        let questionNumber: String
-    }
-
+    private var questionFactory: QuestionFactoryProtocol? //  Фабрика вопросов
+    private var alertPresenter: AlertPresenterProtocol?  //  Всплывающее окно
+    private var statisticService: StatisticServiceProtocol = StatisticService() // Статистика по всем квизам
     private var currentQuestionIndex: Int = 0 // Переменная индекс вопроса
     private var correctAnswers: Int = 0 // Переменная число правильных ответов для вывода в конце
     private var questionsAmount: Int = 10 // Общее количество вопросов для квиза
-    private var questionFactory: QuestionFactory = QuestionFactory() //  Фабрика вопросов
-    private var currentQuestion: QuizQuestion? // Вопрос который видит пользователь
+    private var sp05CurrentQuestion: QuizQuestion? // Вопрос который видит пользователь
     
-
+    // Метод обнуления параметров при запуске нового квиза
+    private func newQuizData() {
+        currentQuestionIndex = 0
+        correctAnswers = 0
+        questionFactory?.requestNextQuestion()
+    }
+    
     // Метод перевода данных из представления базы данных в представление приложения
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let quizQuestionConvert = QuizStepViewModel(
-                                image: UIImage(named: model.image) ?? UIImage(),
-                                question: model.text,
-                                questionNumber: "\(currentQuestionIndex + 1) /\(questionsAmount)")
+            image: UIImage(named: model.image) ?? UIImage(),
+            question: model.text,
+            questionNumber: "\(currentQuestionIndex + 1) /\(questionsAmount)")
         return quizQuestionConvert
     }
     
@@ -40,26 +41,9 @@ final class MovieQuizViewController: UIViewController {
     }
     
     // Метод выводит на экран результаты квиза ну и обнуляет все результаты при нажатии на кнопку
-    private func showRes(quiz result: QuizResultViewModel) {
-        let alert = UIAlertController(
-            title: result.title,
-            message: result.text,
-            preferredStyle: .alert)
-        
-        let action = UIAlertAction(title: result.buttonText, style: .default) {[weak self] _ in
-            guard let self = self else { return }
-                self.currentQuestionIndex = 0
-                self.correctAnswers = 0
-                
-                //let firstQuestion = self.questions[self.currentQuestionIndex]
-            if let firstQuestion = self.questionFactory.requestNextQuestion() {
-                currentQuestion = firstQuestion
-                let viewModel = self.convert(model: firstQuestion)
-                self.show(quiz: viewModel)
-            }
-        }
-        alert.addAction(action)
-        self.present(alert, animated: true, completion: nil)
+    private func showRes(quiz result: AlertModel) {
+        alertPresenter = AlertPresenter(delegate: self)
+        alertPresenter?.newLogicShowRez(newQuiz: result)
     }
     
     // Метод выполняет действия в случае если ответ верный/не верный
@@ -82,45 +66,45 @@ final class MovieQuizViewController: UIViewController {
     // Метод либо показывает следующий вопрос, либо показывает экран результатов квиза
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
-            let text = "Ваш результат: \(correctAnswers)/\(questionsAmount)" // Выводит статистику по квизу
-            let viewModel = QuizResultViewModel( // Создает объект структуры финала квиза
-                        title: "Этот раунд окончен!",
-                        text: text,
-                        buttonText: "Сыграть ещё раз")
+           statisticService.store(correct: correctAnswers, total: questionsAmount)
+            let text = "Ваш результат: \(correctAnswers)/\(questionsAmount)\n Количество сыграных квизов: \(statisticService.gamesCount) \n Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(statisticService.bestGame.date.dateTimeString))\n Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy)) %" // Выводит статистику по квизу
+            let viewModel = AlertModel( // Создает объект структуры финала квиза
+                title: "Этот раунд окончен!",
+                message: text,
+                buttonText: "Сыграть ещё раз",
+                callback: newQuizData )
             showRes(quiz: viewModel) // Запускаем метод вывода на экран заключительного экрана
             imageView.layer.borderColor = UIColor.clear.cgColor // Почему то в учебе не указано что цвет рамки надо отключать или я слепой
         } else { // 2
             currentQuestionIndex += 1 // Перебираем следующий индекс-вопрос
-            //let nextQuestion = questions[currentQuestionIndex]
-            if let nextQuestion = questionFactory.requestNextQuestion() {
-                currentQuestion = nextQuestion
-                let viewModel = convert(model: nextQuestion)
-                show(quiz: viewModel) // Показываем данные следующего вопроса
-                imageView.layer.borderColor = UIColor.clear.cgColor // Почему то в учебе не указано что цвет рамки надо отключать или я слепой
-            }
+            self.questionFactory?.requestNextQuestion()
+            imageView.layer.borderColor = UIColor.clear.cgColor // Почему то в учебе не указано что цвет рамки надо отключать или я слепой
         }
+    }
+    
+    // Функция, созданная для описания шрифтов кодом
+    private func fontProperties() {
+        // Загруженные шрифты удается подключить либо так, либо через левые схемы параметров
+        indexLabel.font = UIFont(name: "YSDisplay-Medium", size: 20)
+        questionLabel.font = UIFont(name: "YSDisplay-Bold", size: 23)
+        yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
+        noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
     }
     
     // Экшн кнопки ДА
     @IBAction private func yesButtonClicked(_ sender: Any) {
-        guard let currentQuestion = currentQuestion else {
+        guard let currentQuestion = sp05CurrentQuestion else {
             return
         }
-        // let currentQuestion = questions[currentQuestionIndex]
-        print(currentQuestion)
-        //print(currentQuestionIndex)
         let myAnswer = true
         showAnswerResult(isCorrect: myAnswer == currentQuestion.correctAnswer) //запускаем метод сравнения нашего ответа с правильным в обоих случаях
     }
     
     // Экшн кнопки НЕТ
     @IBAction private func noButtonClicked(_ sender: Any) {
-        guard let currentQuestion = currentQuestion else {
+        guard let currentQuestion = sp05CurrentQuestion else {
             return
         }
-        print(currentQuestion)
-        //print(currentQuestionIndex)
-        //let currentQuestion = questions[currentQuestionIndex]
         let myAnswer = false
         showAnswerResult(isCorrect: myAnswer == currentQuestion.correctAnswer) //запускаем метод сравнения нашего ответа с правильным в обоих случаях
     }
@@ -130,85 +114,26 @@ final class MovieQuizViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Загруженные шрифты удается подключить либо так, либо через левые схемы параметров
-        indexLabel.font = UIFont(name: "YSDisplay-Medium", size: 20)
-        questionLabel.font = UIFont(name: "YSDisplay-Bold", size: 23)
-        yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
-        noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
-
-        // После launchScreen запускаем первый вопрос
-        //let currentQuestion = questions[currentQuestionIndex]
-        if let firstQuestion = questionFactory.requestNextQuestion() {
-            currentQuestion = firstQuestion
-            let convertedCurrentQuestion = convert(model: firstQuestion)
-            show(quiz: convertedCurrentQuestion)
-        }
-
+        fontProperties() //  Формат шрифтов
         
+        questionFactory = QuestionFactory(delegate: self)
+        questionFactory?.requestNextQuestion()
     }
+    
+    //MARK: - QuestionFactoryDelegate
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else {
+            return
+        }
+        sp05CurrentQuestion = question
+        let convertedCurrentQuestion = convert(model: question)
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.show(quiz: convertedCurrentQuestion)
+        }
+    }
+    
+    
 }
 
-
-/*
- Mock-данные
- 
- 
- Картинка: The Godfather
- Настоящий рейтинг: 9,2
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: The Dark Knight
- Настоящий рейтинг: 9
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: Kill Bill
- Настоящий рейтинг: 8,1
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: The Avengers
- Настоящий рейтинг: 8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: Deadpool
- Настоящий рейтинг: 8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: The Green Knight
- Настоящий рейтинг: 6,6
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- 
- Картинка: Old
- Настоящий рейтинг: 5,8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- 
- Картинка: The Ice Age Adventures of Buck Wild
- Настоящий рейтинг: 4,3
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- 
- Картинка: Tesla
- Настоящий рейтинг: 5,1
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- 
- Картинка: Vivarium
- Настоящий рейтинг: 5,8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
-*/
+  
