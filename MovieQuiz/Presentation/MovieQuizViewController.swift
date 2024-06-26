@@ -66,7 +66,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     // Метод либо показывает следующий вопрос, либо показывает экран результатов квиза
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
-           statisticService.store(correct: correctAnswers, total: questionsAmount)
+            statisticService.store(correct: correctAnswers, total: questionsAmount)
             let text = "Ваш результат: \(correctAnswers)/\(questionsAmount)\n Количество сыграных квизов: \(statisticService.gamesCount) \n Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(statisticService.bestGame.date.dateTimeString))\n Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy)) %" // Выводит статистику по квизу
             let viewModel = AlertModel( // Создает объект структуры финала квиза
                 title: "Этот раунд окончен!",
@@ -132,8 +132,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             self?.show(quiz: convertedCurrentQuestion)
         }
     }
-    
-    
 }
 
   

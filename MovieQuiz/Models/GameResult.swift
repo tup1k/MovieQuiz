@@ -9,8 +9,8 @@ import Foundation
 
 // Структура данных по результатам игры
 struct GameResult {
-    let correct: Int // количество правильных ответов квиза
-    let total: Int // количество вопросов квиза
+    var correct: Int // количество правильных ответов квиза
+    var total: Int // количество вопросов квиза
     let date: Date // дата завершения раунда
     
     func answerCompare(_ difGame: GameResult) -> Bool {
