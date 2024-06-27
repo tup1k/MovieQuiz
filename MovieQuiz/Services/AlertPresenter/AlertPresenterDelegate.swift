@@ -8,5 +8,6 @@
 import Foundation
 import UIKit
 
+// Делегат алерта со статистикой
 protocol AlertPresenterDelegate: UIViewController {
 }

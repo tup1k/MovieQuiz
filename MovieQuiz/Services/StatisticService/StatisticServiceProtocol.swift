@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Протокол для класса вывода статистики
 protocol StatisticServiceProtocol {
     var gamesCount: Int { get } // Количество квизов
     var bestGame: GameResult { get } // Результаты лучшего квиза

@@ -8,18 +8,21 @@
 import Foundation
 import UIKit
 
-class AlertPresenter: AlertPresenterProtocol {
+/// Класс формирования и передачи данных в алерт
+final class AlertPresenter: AlertPresenterProtocol {
    
-    weak var delegate: AlertPresenterDelegate?
+    weak var delegate: AlertPresenterDelegate? // Делегат для алерта
     
     init(delegate: AlertPresenterDelegate) {
         self.delegate = delegate
     }
     
+    // Метод формирования алерта которые передается в контроллер
     func newLogicShowRez(newQuiz result: AlertModel) {
-       
-        let alert = UIAlertController( title: result.title, message: result.message, preferredStyle: .alert)
         
+        let alert = UIAlertController( title: result.title, message: result.message, preferredStyle: .alert) // Текст у высплывающего сообщения
+        
+        // Текст и методы у кнопки
         let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
             guard let _ = self else { return }
             result.callback()

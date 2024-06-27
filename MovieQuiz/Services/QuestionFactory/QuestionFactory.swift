@@ -7,7 +7,8 @@
 
 import Foundation
 
-class QuestionFactory: QuestionFactoryProtocol {
+// класс создания фабрики вопросов
+final class QuestionFactory: QuestionFactoryProtocol {
     /// Массив данных для квиза
     private let questions: [QuizQuestion] = [
             QuizQuestion(
@@ -52,18 +53,19 @@ class QuestionFactory: QuestionFactoryProtocol {
                 correctAnswer: false)
         ]
     
-    weak var delegate: QuestionFactoryDelegate?
+    weak var delegate: QuestionFactoryDelegate? // Делегат фабрики вопросов
     
     init(delegate: QuestionFactoryDelegate? = nil) {
         self.delegate = delegate
     }
     
+    // Метод рандомного выбора индексов и запроса из массива вопросов по нему
     func requestNextQuestion() {
         guard let index = (0..<questions.count).randomElement() else {
             delegate?.didReceiveNextQuestion(question: nil)
             return
         }
         let question = questions[safe: index]
-        delegate?.didReceiveNextQuestion(question: question)
+        delegate?.didReceiveNextQuestion(question: question) // Переходим к методу в контроллере
     }
 }

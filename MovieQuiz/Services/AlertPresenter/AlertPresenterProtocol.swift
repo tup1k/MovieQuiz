@@ -7,6 +7,7 @@
 
 import Foundation
 
+// Протокол алерта со статистикой
 protocol AlertPresenterProtocol {
-    func newLogicShowRez(newQuiz result: AlertModel)
+    func newLogicShowRez(newQuiz result: AlertModel) //Метод для передачи данных в алерт
 }

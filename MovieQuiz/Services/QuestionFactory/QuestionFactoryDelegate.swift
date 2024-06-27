@@ -7,6 +7,7 @@
 
 import Foundation
 
+// Делегат для создания фабрики вопросов
 protocol QuestionFactoryDelegate: AnyObject {
     func didReceiveNextQuestion(question: QuizQuestion?)   
 }

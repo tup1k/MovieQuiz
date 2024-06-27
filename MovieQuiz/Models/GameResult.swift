@@ -13,6 +13,7 @@ struct GameResult {
     var total: Int // количество вопросов квиза
     let date: Date // дата завершения раунда
     
+    // Метод сравнения двух игра - если результаты новой игры хуже (меньше) старой то true
     func answerCompare(_ difGame: GameResult) -> Bool {
         correct > difGame.correct
     }

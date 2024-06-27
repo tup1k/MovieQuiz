@@ -24,6 +24,15 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         questionFactory?.requestNextQuestion()
     }
     
+    // Функция, созданная для описания шрифтов кодом
+    private func fontProperties() {
+        // Загруженные шрифты удается подключить либо так, либо через левые схемы параметров
+        indexLabel.font = UIFont(name: "YSDisplay-Medium", size: 20)
+        questionLabel.font = UIFont(name: "YSDisplay-Bold", size: 23)
+        yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
+        noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
+    }
+    
     // Метод перевода данных из представления базы данных в представление приложения
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let quizQuestionConvert = QuizStepViewModel(
@@ -67,7 +76,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
             statisticService.store(correct: correctAnswers, total: questionsAmount)
-            let text = "Ваш результат: \(correctAnswers)/\(questionsAmount)\n Количество сыграных квизов: \(statisticService.gamesCount) \n Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(statisticService.bestGame.date.dateTimeString))\n Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy)) %" // Выводит статистику по квизу
+            let text = "Ваш результат: \(correctAnswers)/\(questionsAmount)\n Количество сыграных квизов: \(statisticService.gamesCount) \n Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(statisticService.bestGame.date.dateTimeString))\n Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy)) %" // Выводит общую статистику по всем квизам
             let viewModel = AlertModel( // Создает объект структуры финала квиза
                 title: "Этот раунд окончен!",
                 message: text,
@@ -80,15 +89,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             self.questionFactory?.requestNextQuestion()
             imageView.layer.borderColor = UIColor.clear.cgColor // Почему то в учебе не указано что цвет рамки надо отключать или я слепой
         }
-    }
-    
-    // Функция, созданная для описания шрифтов кодом
-    private func fontProperties() {
-        // Загруженные шрифты удается подключить либо так, либо через левые схемы параметров
-        indexLabel.font = UIFont(name: "YSDisplay-Medium", size: 20)
-        questionLabel.font = UIFont(name: "YSDisplay-Bold", size: 23)
-        yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
-        noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
     }
     
     // Экшн кнопки ДА
