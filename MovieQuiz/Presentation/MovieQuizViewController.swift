@@ -8,6 +8,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     @IBOutlet private weak var questionLabel: UILabel! // Тайтл с текстом вопроса квиза (в нашем случае грузится из моковских данных)
     @IBOutlet private weak var yesButton: UIButton! // Дизайн кнопки ДА
     @IBOutlet private weak var noButton: UIButton! // Дизайн кнопки НЕТ
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView! // Индикатор загрузки
+    
     
     private var questionFactory: QuestionFactoryProtocol? //  Фабрика вопросов
     private var alertPresenter: AlertPresenterProtocol?  //  Всплывающее окно
@@ -16,6 +18,30 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     private var correctAnswers: Int = 0 // Переменная число правильных ответов для вывода в конце
     private var questionsAmount: Int = 10 // Общее количество вопросов для квиза
     private var sp05CurrentQuestion: QuizQuestion? // Вопрос который видит пользователь
+    
+    // Функция параметров индикатора загрузки при его включении
+    private func showLoadingIndicator() {
+        activityIndicator.isHidden = false // показываем индикатор загрузки
+        activityIndicator.startAnimating() // включаем анимацию
+    }
+    
+    // Функция параметров индикатора загрузки при его выключении
+    private func hideLoadingIndicator() {
+        activityIndicator.isHidden = true // показываем индикатор загрузки
+        activityIndicator.stopAnimating() // включаем анимацию
+    }
+    
+    // Метод вызова всплывающего окна при ошибке загрузки данных
+    private func showNetworkError(message: String) {
+        hideLoadingIndicator() // скрываем индикатор загрузки
+       
+        let errorModel = AlertModel(
+            title: "Ошибка",
+            message: message,
+            buttonText: "Попробовать ещё раз",
+            callback: newQuizData )
+        // создайте и покажите алерт
+    }
     
     // Метод обнуления параметров при запуске нового квиза
     private func newQuizData() {
