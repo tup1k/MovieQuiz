@@ -8,7 +8,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     @IBOutlet private weak var questionLabel: UILabel! // Тайтл с текстом вопроса квиза (в нашем случае грузится из моковских данных)
     @IBOutlet private weak var yesButton: UIButton! // Дизайн кнопки ДА
     @IBOutlet private weak var noButton: UIButton! // Дизайн кнопки НЕТ
-    @IBOutlet weak var activityIndicator: UIActivityIndicatorView! // Индикатор загрузки
+    @IBOutlet private weak var activityIndicator: UIActivityIndicatorView! // Индикатор загрузки
     
     
     private var questionFactory: QuestionFactoryProtocol? //  Фабрика вопросов
@@ -18,6 +18,22 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     private var correctAnswers: Int = 0 // Переменная число правильных ответов для вывода в конце
     private var questionsAmount: Int = 10 // Общее количество вопросов для квиза
     private var sp05CurrentQuestion: QuizQuestion? // Вопрос который видит пользователь
+    
+    // Функция выключает/выключает кнопки на время загрузки нового вопроса
+    private func buttonsOnOff(turn status: Bool) {
+        yesButton.isEnabled = status
+        noButton.isEnabled = status
+    }
+    
+    func didLoadDataFromServer() {
+        activityIndicator.isHidden = true
+        questionFactory?.requestNextQuestion()
+    }
+
+    // Метод, сообщающий об ошибке загрузки данных с сервера
+    func didFailToLoadData(with error: Error) {
+        showNetworkError(message: error.localizedDescription)
+    }
     
     // Функция параметров индикатора загрузки при его включении
     private func showLoadingIndicator() {
@@ -38,9 +54,15 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         let errorModel = AlertModel(
             title: "Ошибка",
             message: message,
-            buttonText: "Попробовать ещё раз",
-            callback: newQuizData )
-        // создайте и покажите алерт
+            buttonText: "Попробовать ещё раз") { [weak self] in
+                guard let self = self else {return}
+                self.currentQuestionIndex = 0
+                self.correctAnswers = 0
+                //self.questionFactory?.requestNextQuestion()
+                self.questionFactory?.loadData()
+            }
+        alertPresenter = AlertPresenter(delegate: self)
+        alertPresenter?.newLogicShowRez(newQuiz: errorModel)
     }
     
     // Метод обнуления параметров при запуске нового квиза
@@ -51,7 +73,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     }
     
     // Функция, созданная для описания шрифтов кодом
-    private func fontProperties() {
+    private func setFontProperties() {
         // Загруженные шрифты удается подключить либо так, либо через левые схемы параметров
         indexLabel.font = UIFont(name: "YSDisplay-Medium", size: 20)
         questionLabel.font = UIFont(name: "YSDisplay-Bold", size: 23)
@@ -62,7 +84,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     // Метод перевода данных из представления базы данных в представление приложения
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let quizQuestionConvert = QuizStepViewModel(
-            image: UIImage(named: model.image) ?? UIImage(),
+            image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1) /\(questionsAmount)")
         return quizQuestionConvert
@@ -73,6 +95,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         indexLabel.text = step.questionNumber
         imageView.image = step.image
         questionLabel.text = step.question
+        buttonsOnOff(turn: true)
     }
     
     // Метод выводит на экран результаты квиза ну и обнуляет все результаты при нажатии на кнопку
@@ -83,13 +106,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     
     // Метод выполняет действия в случае если ответ верный/не верный
     private func showAnswerResult(isCorrect: Bool) {
-        if isCorrect {
-            correctAnswers += 1
-        }
         imageView.layer.masksToBounds = true // даём разрешение на рисование рамки
         imageView.layer.borderWidth = 8 // толщина рамки
         imageView.layer.cornerRadius = 20
+        buttonsOnOff(turn: true)
         imageView.layer.borderColor =  isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
+        buttonsOnOff(turn: false)
+        
+        if isCorrect {
+            correctAnswers += 1
+        }
         
         // Отложенный запуск метода показа следуюшего вопроса/окончания квиза через 1 с
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -140,10 +166,11 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        fontProperties() //  Формат шрифтов
+        setFontProperties() //  Формат шрифтов
         
-        questionFactory = QuestionFactory(delegate: self)
-        questionFactory?.requestNextQuestion()
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        showLoadingIndicator()
+        questionFactory?.loadData()
     }
     
     //MARK: - QuestionFactoryDelegate
