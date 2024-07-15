@@ -10,4 +10,5 @@ import Foundation
 // Протокол для создания фабрики вопросов
 protocol QuestionFactoryProtocol {
     func requestNextQuestion()
+    func loadData()
 }
