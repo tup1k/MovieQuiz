@@ -61,9 +61,9 @@ final class MovieQuizUITests: XCTestCase {
         //let firstPoster = app.images["Poster1"] // Проверка несуществующего постера
         let firstPosterData = firstPoster.screenshot().pngRepresentation
         app.buttons["No"].tap()
-        sleep(5)
+        sleep(6)
         app.buttons["No"].tap()
-        sleep(5)
+        sleep(6)
         let secondPoster = app.images["Poster"]
         let secondPosterData = secondPoster.screenshot().pngRepresentation
         

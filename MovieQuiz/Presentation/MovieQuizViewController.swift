@@ -14,10 +14,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     private var questionFactory: QuestionFactoryProtocol? //  Фабрика вопросов
     private var alertPresenter: AlertPresenterProtocol?  //  Всплывающее окно
     private var statisticService: StatisticServiceProtocol = StatisticService() // Статистика по всем квизам
-    private var currentQuestionIndex: Int = 0 // Переменная индекс вопроса
     private var correctAnswers: Int = 0 // Переменная число правильных ответов для вывода в конце
-    private var questionsAmount: Int = 10 // Общее количество вопросов для квиза
     private var sp05CurrentQuestion: QuizQuestion? // Вопрос который видит пользователь
+    private let presenter = MovieQuizPresenter()
     
     // Функция выключает/выключает кнопки на время загрузки нового вопроса
     private func buttonsOnOff(turn status: Bool) {
@@ -56,7 +55,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             message: message,
             buttonText: "Попробовать ещё раз") { [weak self] in
                 guard let self = self else {return}
-                self.currentQuestionIndex = 0
+                self.presenter.resetQuestionIndex()
                 self.correctAnswers = 0
                 //self.questionFactory?.requestNextQuestion()
                 self.questionFactory?.loadData()
@@ -67,7 +66,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     
     // Метод обнуления параметров при запуске нового квиза
     private func newQuizData() {
-        currentQuestionIndex = 0
+        presenter.resetQuestionIndex()
         correctAnswers = 0
         questionFactory?.requestNextQuestion()
     }
@@ -79,15 +78,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         questionLabel.font = UIFont(name: "YSDisplay-Bold", size: 23)
         yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
         noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
-    }
-    
-    // Метод перевода данных из представления базы данных в представление приложения
-    private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        let quizQuestionConvert = QuizStepViewModel(
-            image: UIImage(data: model.image) ?? UIImage(),
-            question: model.text,
-            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
-        return quizQuestionConvert
     }
     
     // Метод вывода на экран приложения конвертированных данных
@@ -126,9 +116,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     
     // Метод либо показывает следующий вопрос, либо показывает экран результатов квиза
     private func showNextQuestionOrResults() {
-        if currentQuestionIndex == questionsAmount - 1 {
-            statisticService.store(correct: correctAnswers, total: questionsAmount)
-            let text = "Ваш результат: \(correctAnswers)/\(questionsAmount)\n Количество сыграных квизов: \(statisticService.gamesCount) \n Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(statisticService.bestGame.date.dateTimeString))\n Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy)) %" // Выводит общую статистику по всем квизам
+        if presenter.isLastQuestion() {
+            statisticService.store(correct: correctAnswers, total: presenter.questionsAmount)
+            let text = "Ваш результат: \(correctAnswers)/\(presenter.questionsAmount)\n Количество сыграных квизов: \(statisticService.gamesCount) \n Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(statisticService.bestGame.date.dateTimeString))\n Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy)) %" // Выводит общую статистику по всем квизам
             let viewModel = AlertModel( // Создает объект структуры финала квиза
                 title: "Этот раунд окончен!",
                 message: text,
@@ -137,7 +127,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             showRes(quiz: viewModel) // Запускаем метод вывода на экран заключительного экрана
             imageView.layer.borderColor = UIColor.clear.cgColor // Почему то в учебе не указано что цвет рамки надо отключать или я слепой
         } else { // 2
-            currentQuestionIndex += 1 // Перебираем следующий индекс-вопрос
+            presenter.switchToNextQuestion() // Перебираем следующий индекс-вопрос
             self.questionFactory?.requestNextQuestion()
             imageView.layer.borderColor = UIColor.clear.cgColor // Почему то в учебе не указано что цвет рамки надо отключать или я слепой
         }
@@ -179,7 +169,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             return
         }
         sp05CurrentQuestion = question
-        let convertedCurrentQuestion = convert(model: question)
+        let convertedCurrentQuestion = presenter.convert(model: question)
         
         DispatchQueue.main.async { [weak self] in
             self?.show(quiz: convertedCurrentQuestion)
