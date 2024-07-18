@@ -81,7 +81,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     }
     
     // Метод вывода на экран приложения конвертированных данных
-    private func show(quiz step: QuizStepViewModel) {
+    func show(quiz step: QuizStepViewModel) {
         indexLabel.text = step.questionNumber
         imageView.image = step.image
         questionLabel.text = step.question
@@ -135,13 +135,11 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     
     // Экшн кнопки ДА
     @IBAction private func yesButtonClicked(_ sender: Any) {
-        presenter.sp05CurrentQuestion = sp05CurrentQuestion
         presenter.yesButtonClicked()
     }
     
     // Экшн кнопки НЕТ
     @IBAction private func noButtonClicked(_ sender: Any) {
-        presenter.sp05CurrentQuestion = sp05CurrentQuestion
         presenter.noButtonClicked()
     }
     
@@ -161,15 +159,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     
     //MARK: - QuestionFactoryDelegate
     func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else {
-            return
-        }
-        sp05CurrentQuestion = question
-        let convertedCurrentQuestion = presenter.convert(model: question)
-        
-        DispatchQueue.main.async { [weak self] in
-            self?.show(quiz: convertedCurrentQuestion)
-        }
+        presenter.didReceiveNextQuestion(question: question)
     }
 }
 

@@ -37,20 +37,33 @@ final class MovieQuizPresenter {
     
     
     // Логика кнопки ДА
-   func yesButtonClicked() {
-        guard let currentQuestion = sp05CurrentQuestion else {
-            return
-        }
-        let myAnswer = true
-       viewController?.showAnswerResult(isCorrect: myAnswer == currentQuestion.correctAnswer) //запускаем метод сравнения нашего ответа с правильным в обоих случаях
+    func yesButtonClicked() {
+        didAnswer(isYes: true)
     }
     
     // Логика кнопки НЕТ
     func noButtonClicked() {
+        didAnswer(isYes: false)
+    }
+    
+    private func didAnswer(isYes: Bool) {
         guard let currentQuestion = sp05CurrentQuestion else {
             return
         }
-        let myAnswer = false
+        let myAnswer = isYes
         viewController?.showAnswerResult(isCorrect: myAnswer == currentQuestion.correctAnswer) //запускаем метод сравнения нашего ответа с правильным в обоих случаях
+    }
+    
+    //MARK: - QuestionFactoryDelegate
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else {
+            return
+        }
+        sp05CurrentQuestion = question
+        let convertedCurrentQuestion = convert(model: question)
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.viewController?.show(quiz: convertedCurrentQuestion)
+        }
     }
 }
