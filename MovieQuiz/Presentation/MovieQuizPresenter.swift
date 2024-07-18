@@ -10,6 +10,9 @@ import UIKit
 final class MovieQuizPresenter {
     let questionsAmount: Int = 10
     private var currentQuestionIndex: Int = 0
+    var sp05CurrentQuestion: QuizQuestion? // Вопрос который видит пользователь
+    weak var viewController: MovieQuizViewController?
+    
     
     func isLastQuestion() -> Bool {
         currentQuestionIndex == questionsAmount - 1
@@ -32,4 +35,22 @@ final class MovieQuizPresenter {
         return quizQuestionConvert
     }
     
+    
+    // Логика кнопки ДА
+   func yesButtonClicked() {
+        guard let currentQuestion = sp05CurrentQuestion else {
+            return
+        }
+        let myAnswer = true
+       viewController?.showAnswerResult(isCorrect: myAnswer == currentQuestion.correctAnswer) //запускаем метод сравнения нашего ответа с правильным в обоих случаях
+    }
+    
+    // Логика кнопки НЕТ
+    func noButtonClicked() {
+        guard let currentQuestion = sp05CurrentQuestion else {
+            return
+        }
+        let myAnswer = false
+        viewController?.showAnswerResult(isCorrect: myAnswer == currentQuestion.correctAnswer) //запускаем метод сравнения нашего ответа с правильным в обоих случаях
+    }
 }

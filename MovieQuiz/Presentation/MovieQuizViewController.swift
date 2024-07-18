@@ -95,7 +95,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     }
     
     // Метод выполняет действия в случае если ответ верный/не верный
-    private func showAnswerResult(isCorrect: Bool) {
+    func showAnswerResult(isCorrect: Bool) {
         imageView.layer.masksToBounds = true // даём разрешение на рисование рамки
         imageView.layer.borderWidth = 8 // толщина рамки
         imageView.layer.cornerRadius = 20
@@ -135,20 +135,14 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     
     // Экшн кнопки ДА
     @IBAction private func yesButtonClicked(_ sender: Any) {
-        guard let currentQuestion = sp05CurrentQuestion else {
-            return
-        }
-        let myAnswer = true
-        showAnswerResult(isCorrect: myAnswer == currentQuestion.correctAnswer) //запускаем метод сравнения нашего ответа с правильным в обоих случаях
+        presenter.sp05CurrentQuestion = sp05CurrentQuestion
+        presenter.yesButtonClicked()
     }
     
     // Экшн кнопки НЕТ
     @IBAction private func noButtonClicked(_ sender: Any) {
-        guard let currentQuestion = sp05CurrentQuestion else {
-            return
-        }
-        let myAnswer = false
-        showAnswerResult(isCorrect: myAnswer == currentQuestion.correctAnswer) //запускаем метод сравнения нашего ответа с правильным в обоих случаях
+        presenter.sp05CurrentQuestion = sp05CurrentQuestion
+        presenter.noButtonClicked()
     }
     
     
@@ -161,6 +155,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
         showLoadingIndicator()
         questionFactory?.loadData()
+        
+        presenter.viewController = self
     }
     
     //MARK: - QuestionFactoryDelegate
