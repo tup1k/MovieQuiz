@@ -21,7 +21,7 @@ final class AlertPresenter: AlertPresenterProtocol {
     func newLogicShowRez(newQuiz result: AlertModel) {
         
         let alert = UIAlertController( title: result.title, message: result.message, preferredStyle: .alert) // Текст у высплывающего сообщения
-        
+        alert.view.accessibilityIdentifier = "QuizAlert"
         // Текст и методы у кнопки
         let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
             guard let _ = self else { return }
